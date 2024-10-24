@@ -59,8 +59,8 @@ class ShipObstacle:
         get_inflated_points(radius: float) -> list:
             Calcola i punti inflated del poligono della nave.
     """
-    def __init__(self, ship_center, Options={}, inflation_radius=0.5, use_default_values=True):
-        # type: (tuple, Dict, float, bool) -> None
+    def __init__(self, ship_center, Options={}, inflation_radius=0.5, use_default_values=True, scale: float = 0.9):
+        # type: (tuple, Dict, float, bool, float) -> None
         """
         Inizializza un'istanza della classe.
         Args:
@@ -89,14 +89,12 @@ class ShipObstacle:
             a_left =           0.2
             a_right =          2.8
             points_distance =  0.2
-            scale =            0.9
         else:
             L =                 Options['L']
             W =                 Options['W']
             a_left =            Options['a_left']
             a_right =           Options['a_right']
             points_distance =   Options['points_distance']
-            scale =             Options['scale']
         
         self.inflation_radius = inflation_radius
 
@@ -520,11 +518,12 @@ def generate_ship_polygon(L, W, a_left, a_right, points_distance, ship_center, s
     Raises:
         ValueError: Se il numero di punti x e y non e` lo stesso.
     """
+    
     L = L * scale
     W = W * scale
     a_left = a_left * scale
     a_right = a_right * scale
-    # points_distance = points_distance * scale
+    points_distance = points_distance * scale
 
     b_left = W / 2
     b_right = W / 2
