@@ -11,5 +11,5 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
     ],
-    python_requires='>=2.7.18',
+    python_requires='>=2.7.17',
 )
