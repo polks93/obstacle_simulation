@@ -59,7 +59,7 @@ class ShipObstacle:
         get_inflated_points(radius: float) -> list:
             Calcola i punti inflated del poligono della nave.
     """
-    def __init__(self, ship_center, Options={}, inflation_radius=0.5, use_default_values=True, scale: float = 0.9):
+    def __init__(self, ship_center, Options={}, inflation_radius=0.5, use_default_values=True, scale=0.9):
         # type: (tuple, Dict, float, bool, float) -> None
         """
         Inizializza un'istanza della classe.
