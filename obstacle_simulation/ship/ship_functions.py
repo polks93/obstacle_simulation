@@ -59,8 +59,8 @@ class ShipObstacle:
         get_inflated_points(radius: float) -> list:
             Calcola i punti inflated del poligono della nave.
     """
-    def __init__(self, ship_center, Options={}, inflation_radius=0.5, use_default_values=True, scale=0.9):
-        # type: (tuple, Dict, float, bool, float) -> None
+    def __init__(self, ship_center, Options={}, inflation_radius=0.5, use_default_values=True, scale=0.9, use_custom_ship=False):
+        # type: (tuple, Dict, float, bool, float, bool) -> None
         """
         Inizializza un'istanza della classe.
         Args:
@@ -99,7 +99,10 @@ class ShipObstacle:
         self.inflation_radius = inflation_radius
 
         # Genera i punti del poligono della nave
-        self.points = generate_ship_polygon(L, W, a_left, a_right, points_distance, ship_center, scale)
+        if not use_custom_ship:
+            self.points = generate_ship_polygon(L, W, a_left, a_right, points_distance, ship_center, scale)
+        else:
+            self.points = generate_custom_ship_polygon(L, W, a_left, a_right, points_distance, ship_center, scale)
         # Salva i punti di default
         self.default_points = copy.deepcopy(self.points)
         
@@ -566,6 +569,95 @@ def generate_ship_polygon(L, W, a_left, a_right, points_distance, ship_center, s
             points.append((x_round, y_round))
     return points
 
+def generate_custom_ship_polygon(L, W, a_left, a_right, points_distance, ship_center, scale=1.0):
+        # type: (float, float, float, float, float, tuple, float) -> list
+    """
+    Genera un poligono che rappresenta una nave basato sui parametri forniti.
+    Il poligono e` composto da un rettangolo con due semicerchi ai lati e segmenti equidistanti sulla parte superiore e inferiore.
+    Args:
+        L (float): Lunghezza della parte rettilinea della nave.
+        W (float): Larghezza della nave.
+        a_left (float): Semiasse x dell'arco sinistro.
+        a_right (float): Semiasse x dell'arco destro.
+        points_distance (float): Distanza desiderata tra i punti del poligono.
+        scale (float, opzionale): Fattore di scala per i parametri della nave. Default e` 1.0.
+    Returns:
+        list: Una lista di tuple contenenti le coordinate (x, y) dei punti del poligono.
+    Raises:
+        ValueError: Se il numero di punti x e y non e` lo stesso.
+    """
+    
+    L = L * scale
+    W = W * scale
+    a_right = a_right * scale
+    points_distance = points_distance * scale
+
+    a_left = 1.5*W
+    b_left = W / 2
+    b_right = W / 2
+
+    center_left1 = (-L/2 - a_left, W/2)
+    center_left2 = (-L/2 - a_left, -W/2)
+    center_right = (L/2, 0)
+
+    x_left, y_left = arc_points(a_left, b_left, center_left1, -np.pi/2, 0, points_distance=points_distance, clockwise=False)
+    x2_left, y2_left = arc_points(a_left, b_left, center_left2, 0, np.pi/2, points_distance=points_distance, clockwise=False)
+
+
+
+
+    x_left = x_left[::-1]
+    y_left = y_left[::-1]
+    y_left[1] += 0.01*scale
+    # x_left = np.insert(x_left, 3, (x_left[2]+points_distance*0.1))
+    # y_left = np.insert(y_left, 3, (y_left[2]+points_distance*0.9))
+    # x_left = np.insert(x_left, 4, (x_left[3]+points_distance*0.1))
+    # y_left = np.insert(y_left, 4, y_left[2])
+    
+    y2_left[1] -= 0.01*scale
+    # x2_left = np.insert(x2_left, 3, (x2_left[2]+points_distance*0.1))
+    # y2_left = np.insert(y2_left, 3, (y2_left[2]-points_distance*0.9))
+    # x2_left = np.insert(x2_left, 4, (x2_left[3]+points_distance*0.1))
+    # y2_left = np.insert(y2_left, 4, y2_left[2])
+    x_right, y_right = arc_points(a_right, b_right, center_right, -np.pi/2, np.pi/2, points_distance=points_distance, clockwise=False)
+
+    num_points_center = int(np.ceil(L / points_distance))
+
+    x_center_top = np.linspace(-L/2, L/2, num_points_center)
+    x_center_bottom = np.linspace(L/2, -L/2, num_points_center)
+    y_center_top = np.full_like(x_center_top, W/2)
+    y_center_bottom = np.full_like(x_center_bottom, -W/2)
+
+    x_left[-1] = (x_center_top[1] + x_left[-2]) / 2
+    y_left[-1] = (y_center_top[1] + y_left[-2]) / 2
+    x2_left[-1] = (x_center_bottom[-2] + x2_left[-2]) / 2
+    y2_left[-1] = (y_center_bottom[-2] + y2_left[-2]) / 2
+    x2_left = x2_left[1:]
+    y2_left = y2_left[1:]
+    x = np.concatenate([x_left, x_center_top[1:-1], x_right, x_center_bottom[1:-1], x2_left[::-1]])
+    y = np.concatenate([y_left, y_center_top[1:-1], y_right, y_center_bottom[1:-1], y2_left[::-1]])
+
+    des_Cx, des_Cy = ship_center
+    x_max = max(x)
+    x_min = min(x)
+    y_max = max(y)
+    y_min = min(y)
+    Cx = (x_max + x_min) / 2
+    Cy = (y_max + y_min) / 2
+    vector = (des_Cx - Cx, des_Cy - Cy)
+    x = x + vector[0]
+    y = y + vector[1]
+
+    points = []
+    if len(x) != len(y):
+        raise ValueError("The number of x and y points must be the same.")
+    else:
+    
+        for i in range(len(x)):
+            x_round = round(float(x[i]), 2)
+            y_round = round(float(y[i]), 2)
+            points.append((x_round, y_round))
+    return points
 
 if __name__ == "__main__":
     """ Test della funzione generate_ship_polygon """
@@ -574,19 +666,19 @@ if __name__ == "__main__":
     # a_left = 0.2
     # a_right = 2.8
     # points_distance = 0.2
-    # points = generate_ship_polygon(L, W, a_left, a_right, points_distance)
+    # points = generate_custom_ship_polygon(L, W, a_left, a_right, points_distance, (0,0), scale=2)
     # print(len(points))
     # x, y = zip(*points)
-    # rot_points = []
-    # for point in points:
-    #     x_rot, y_rot = rotate_point(point, (1, 0), -np.pi/4)
-    #     rot_points.append((x_rot, y_rot))
+    # # rot_points = []
+    # # for point in points:
+    # #     x_rot, y_rot = rotate_point(point, (1, 0), -np.pi/4)
+    # #     rot_points.append((x_rot, y_rot))
 
-    # x_rot, y_rot = zip(*rot_points)
+    # # x_rot, y_rot = zip(*rot_points)
     # # Grafico della forma aggiornata
     # plt.figure(figsize=(8, 4))
     # plt.plot(x, y, '-o', label='Rettangolo con Semicerchi e Segmenti Equidistanti')
-    # plt.plot(x_rot, y_rot, '-o', label='Rettangolo con Semicerchi e Segmenti Equidistanti Ruotato di 45')
+    # # plt.plot(x_rot, y_rot, '-o', label='Rettangolo con Semicerchi e Segmenti Equidistanti Ruotato di 45')
     # plt.axis('equal')
     # plt.title('Approssimazione della Chiglia con Segmenti Equidistanti sui Lati Orizzontali')
     # plt.xlabel('X')
@@ -595,76 +687,80 @@ if __name__ == "__main__":
     # plt.show()
 
     """" Test della classe ShipObstacle """
-    # Worksapce
-    workspace = (0,0,8,8)
-    workspace_center = ((workspace[0] + workspace[2]) / 2, (workspace[1] + workspace[3]) / 2)
-    workspace_points = [(workspace[0], workspace[1]), (workspace[2], workspace[1]), (workspace[2], workspace[3]), (workspace[0], workspace[3]), (workspace[0], workspace[1])]
-    x_ws, y_ws = zip(*workspace_points)
+    # # Worksapce
+    # workspace = (0,0,8,8)
+    # workspace_center = ((workspace[0] + workspace[2]) / 2, (workspace[1] + workspace[3]) / 2)
+    # # workspace_points = [(workspace[0], workspace[1]), (workspace[2], workspace[1]), (workspace[2], workspace[3]), (workspace[0], workspace[3]), (workspace[0], workspace[1])]
+    # # x_ws, y_ws = zip(*workspace_points)
     
-    # Genera la nave
-    Ship = ShipObstacle(ship_center=workspace_center, use_default_values=True)
-    
-    Ship.random_placement(workspace, safe_distance=1.5)
-    Ship.reset_ship()
-    point = np.array([5.03,5.0])
-    print(Ship.point_in_ship(point))
+    # # # Genera la nave
+    # # Ship = ShipObstacle(ship_center=workspace_center, use_default_values=True, use_custom_ship=True)
+    # ship_center = workspace_center
+    # ship_scale_factor = 1.0
+    # footprint = 0.5
+    # Ship = ShipObstacle(ship_center, scale=ship_scale_factor, inflation_radius=footprint, use_custom_ship=True)
+    # # Ship.random_placement(workspace, safe_distance=1.5)
+    # # # Ship.reset_ship()
+    # point = np.array([4.03,4.5])
+    # print(Ship.point_in_ship(point))
 
-    edges = Ship.get_edges()
-    print(len(edges))
-    inflated_points = Ship.inflated_points
-    x_inflate, y_inflate = zip(*inflated_points)
-    # print(len(edges))
-    # Ship.rototranslate_ship(0, (0,0))
-    # Ship.reset_ship()
-    Cx, Cy = Ship.center
-    radius = Ship.radius
-    points = Ship.points
-    x, y = zip(*points)
-
-    x_min = Ship.x_min
-    x_max = Ship.x_max
-    y_min = Ship.y_min
-    y_max = Ship.y_max
-    square_points = [(x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max), (x_min, y_min)]
-    x_square, y_square = zip(*square_points)
-
-    theta = np.linspace(0, 2*np.pi, 100)
-    x_circle = Cx + radius * np.cos(theta)
-    y_circle = Cy + radius * np.sin(theta)
-
-    # Ship.rototranslate_ship(np.pi/4, (0,0))
-    # rot_points = Ship.points
-    # x_rot, y_rot = zip(*rot_points)
-    
-    # Ship.reset_ship()
+    # # edges = Ship.get_edges()
+    # # print(len(edges))
+    # inflated_points = Ship.inflated_points
+    # x_inflate, y_inflate = zip(*inflated_points)
+    # # # # print(len(edges))
+    # # # # Ship.rototranslate_ship(0, (0,0))
+    # # # # Ship.reset_ship()
+    # Cx, Cy = Ship.center
+    # radius = Ship.radius
     # points = Ship.points
     # x, y = zip(*points)
 
-    dict_points = []
-    for segment in Ship.segments_dict.values():
-        x_c, y_c = segment.mid_point
-        dict_points.append((x_c, y_c))
-    x_c, y_c = zip(*dict_points)
+    # x_min = Ship.x_min
+    # x_max = Ship.x_max
+    # y_min = Ship.y_min
+    # y_max = Ship.y_max
+    # square_points = [(x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max), (x_min, y_min)]
+    # x_square, y_square = zip(*square_points)
+
+    # theta = np.linspace(0, 2*np.pi, 100)
+    # x_circle = Cx + radius * np.cos(theta)
+    # y_circle = Cy + radius * np.sin(theta)
+
+    # # Ship.rototranslate_ship(np.pi/4, (0,0))
+    # # rot_points = Ship.points
+    # # x_rot, y_rot = zip(*rot_points)
+    
+    # # # Ship.reset_ship()
+    # # # points = Ship.points
+    # # # x, y = zip(*points)
+
+    # dict_points = []
+    # for segment in Ship.segments_dict.values():
+    #     x_c, y_c = segment.mid_point
+    #     dict_points.append((x_c, y_c))
+    # x_c, y_c = zip(*dict_points)
 
 
 
-    plt.figure(figsize=(8, 4))
-    plt.plot(x, y, '-o', label='Rettangolo con Semicerchi e Segmenti Equidistanti')
-    # plt.plot(x_rot, y_rot, '-o', label='Rettangolo con Semicerchi e Segmenti Equidistanti Ruotato di 45')
-    plt.plot(x_inflate, y_inflate, '-o', label='Rettangolo Inflato')
-    plt.scatter(Cx, Cy, color='r', label='Centro della Nave', s=100)
+    # plt.figure(figsize=(8, 4))
+    # plt.plot(x, y, '-o', label='Rettangolo con Semicerchi e Segmenti Equidistanti')
+    # # plt.plot(x_rot, y_rot, '-o', label='Rettangolo con Semicerchi e Segmenti Equidistanti Ruotato di 45')
+    # plt.plot(x_inflate, y_inflate, '-o', label='Rettangolo Inflato')
+    # plt.scatter(Cx, Cy, color='r', label='Centro della Nave', s=100)
     # plt.plot(x_square, y_square, '-o', label='Quadrato di Bounding Box')
-    plt.scatter(point[0], point[1], color='g', label='Punto da Testare', s=100)
+    # plt.scatter(point[0], point[1], color='g', label='Punto da Testare', s=100)
 
-    plt.plot(x_c, y_c, '+r', label='Punti Medi dei Segmenti')
+    # plt.plot(x_c, y_c, '+r', label='Punti Medi dei Segmenti')
     # plt.plot(x_circle, y_circle, '--', label='Circonferenza di Bounding Box')
-    plt.axis('equal')
-    plt.title('Approssimazione della Chiglia con Segmenti Equidistanti sui Lati Orizzontali')
-    plt.xlabel('X')
-    plt.ylabel('Y')
-    plt.grid(True)
-    plt.show()
-    # for i in range(5):
+    # plt.axis('equal')
+    # # # plt.title('Approssimazione della Chiglia con Segmenti Equidistanti sui Lati Orizzontali')
+    # # # plt.xlabel('X')
+    # # # plt.ylabel('Y')
+    # # # plt.xlim(-2,8)
+    # # # plt.grid(True)
+    # plt.show()
+    # # for i in range(5):
     #     # vec = (np.random.uniform(-1.5, 1.5), np.random.uniform(-1.5, 1.5))
     #     # theta = np.random.uniform(0, 2*np.pi)
     #     # Ship.rototranslate_ship(theta, vec)
@@ -691,3 +787,164 @@ if __name__ == "__main__":
     #     plt.show()
 
     #     Ship.reset_ship()
+  
+    """Plot geometria nave"""
+    L =                1
+    W =                1.5
+    a_left =           0.2
+    a_right =          2.8
+    points_distance =  0.2
+    ship_center =      (0,0)    
+
+
+    # b_left = W / 2
+    # b_right = W / 2
+
+    # center_left = (-L/2, 0)
+    # center_right = (L/2, 0)
+
+    # x_left, y_left = arc_points(a_left, b_left, center_left, -np.pi/2, np.pi/2, points_distance=points_distance, clockwise=True)
+    # x_right, y_right = arc_points(a_right, b_right, center_right, -np.pi/2, np.pi/2, points_distance=points_distance, clockwise=False)
+
+    # num_points_center = int(np.ceil(L / points_distance))
+
+    # x_center_top = np.linspace(-L/2, L/2, num_points_center)
+    # x_center_bottom = np.linspace(L/2, -L/2, num_points_center)
+    # y_center_top = np.full_like(x_center_top, W/2)
+    # y_center_bottom = np.full_like(x_center_bottom, -W/2)
+
+    # x = np.concatenate([x_left, x_center_top[1:-1], x_right, x_center_bottom[1:-1]])
+    # y = np.concatenate([y_left, y_center_top[1:-1], y_right, y_center_bottom[1:-1]])
+
+    # des_Cx, des_Cy = ship_center
+    # x_max = max(x)
+    # x_min = min(x)
+    # y_max = max(y)
+    # y_min = min(y)
+    # Cx = (x_max + x_min) / 2
+    # Cy = (y_max + y_min) / 2
+    # vector = (des_Cx - Cx, des_Cy - Cy)
+
+    # points = []
+    # if len(x) != len(y):
+    #     raise ValueError("The number of x and y points must be the same.")
+    # else:
+    
+    #     for i in range(len(x)):
+    #         x_round = round(float(x[i]), 2)
+    #         y_round = round(float(y[i]), 2)
+    #         points.append((x_round, y_round))
+
+    # x, y = zip(*points)
+    # x = list(x)
+    # y = list(y)
+    # x.append(x[0])
+    # y.append(y[0])
+
+    # x1, y1 = arc_points(a_left, b_left, center_left, 0, 2*np.pi, points_distance=0.001, clockwise=True)
+    # x2, y2 = arc_points(a_right, b_right, center_right, 0, 2*np.pi, points_distance=0.001, clockwise=False)
+
+    # x3 = [-L/2, L/2, L/2, -L/2, -L/2]
+    # y3 = [W/2, W/2, -W/2, -W/2, W/2]
+
+    # plt.figure(figsize=(8, 4))
+    # plt.plot(x1, y1, '-', label='Ellisse A')
+    # plt.plot(x2, y2, '-', label='Ellisse B')
+    # plt.plot(x3, y3, '-', label='Rettangolo')
+    # plt.plot(x, y, 'o', label='Poligono chiglia')
+    # plt.legend(fontsize=16)
+    # plt.grid(True)
+    # plt.axis('equal')
+    # plt.title('Geometria nave', fontsize=16)
+    # plt.xlabel('X', fontsize=16)
+    # plt.ylabel('Y', fontsize=16)
+    # plt.xticks(fontsize=14)
+    # plt.yticks(fontsize=14)
+    # plt.show()
+
+    scale = 1.0
+    a_left = 1.5*W
+    b_left = W / 2
+    b_right = W / 2
+
+    center_left1 = (-L/2 - a_left, W/2)
+    center_left2 = (-L/2 - a_left, -W/2)
+    center_right = (L/2, 0)
+
+    x_left, y_left = arc_points(a_left, b_left, center_left1, -np.pi/2, 0, points_distance=points_distance, clockwise=False)
+    x2_left, y2_left = arc_points(a_left, b_left, center_left2, 0, np.pi/2, points_distance=points_distance, clockwise=False)
+
+
+
+
+    x_left = x_left[::-1]
+    y_left = y_left[::-1]
+    y_left[1] += 0.01*scale
+    y2_left[1] -= 0.01*scale
+    x_right, y_right = arc_points(a_right, b_right, center_right, -np.pi/2, np.pi/2, points_distance=points_distance, clockwise=False)
+
+    num_points_center = int(np.ceil(L / points_distance))
+
+    x_center_top = np.linspace(-L/2, L/2, num_points_center)
+    x_center_bottom = np.linspace(L/2, -L/2, num_points_center)
+    y_center_top = np.full_like(x_center_top, W/2)
+    y_center_bottom = np.full_like(x_center_bottom, -W/2)
+
+    x_left[-1] = (x_center_top[1] + x_left[-2]) / 2
+    y_left[-1] = (y_center_top[1] + y_left[-2]) / 2
+    x2_left[-1] = (x_center_bottom[-2] + x2_left[-2]) / 2
+    y2_left[-1] = (y_center_bottom[-2] + y2_left[-2]) / 2
+    x2_left = x2_left[1:]
+    y2_left = y2_left[1:]
+    x = np.concatenate([x_left, x_center_top[1:-1], x_right, x_center_bottom[1:-1], x2_left[::-1]])
+    y = np.concatenate([y_left, y_center_top[1:-1], y_right, y_center_bottom[1:-1], y2_left[::-1]])
+
+    des_Cx, des_Cy = ship_center
+    x_max = max(x)
+    x_min = min(x)
+    y_max = max(y)
+    y_min = min(y)
+    Cx = (x_max + x_min) / 2
+    Cy = (y_max + y_min) / 2
+    vector = (des_Cx - Cx, des_Cy - Cy)
+    x = x 
+    y = y 
+
+    points = []
+    if len(x) != len(y):
+        raise ValueError("The number of x and y points must be the same.")
+    else:
+    
+        for i in range(len(x)):
+            x_round = round(float(x[i]), 2)
+            y_round = round(float(y[i]), 2)
+            points.append((x_round, y_round))
+
+    print(len(x))
+    x, y = zip(*points)
+    x = list(x)
+    y = list(y)
+    x.append(x[0])
+    y.append(y[0])
+
+    x1, y1 = arc_points(a_left, b_left, center_left1, 0, 2*np.pi, points_distance=0.001, clockwise=True)
+    x2, y2 = arc_points(a_left, b_left, center_left2, 0, 2*np.pi, points_distance=0.001, clockwise=True)
+    x3, y3 = arc_points(a_right, b_right, center_right, 0, 2*np.pi, points_distance=0.001, clockwise=False)
+    x4 = [-L/2, L/2, L/2, -L/2, -L/2]
+    y4 = [W/2, W/2, -W/2, -W/2, W/2]
+
+    plt.figure(figsize=(8, 6))
+    # plt.plot(x1, y1, '-', label='Ellisse A')
+    # plt.plot(x2, y2, '-', label='Ellisse B')
+    # plt.plot(x3, y3, '-', label='Ellisse C')
+    # plt.plot(x4, y4, '-', label='Rettangolo')
+    plt.plot(x, y, '-', label='Poligono chiglia')
+    plt.legend(fontsize=16)
+    plt.grid(True)
+    plt.axis('equal')
+    plt.title('Geometria nave Test 3', fontsize=16)
+    plt.xlabel('X', fontsize=16)
+    plt.ylabel('Y', fontsize=16)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.show()
