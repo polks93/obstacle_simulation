@@ -112,15 +112,5 @@ Contributions are welcome! Please follow these steps:
 2. Create a new branch for your feature or bug fix.
 3. Submit a pull request with a clear description of your changes.
 
-## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Support
-
-If you encounter any issues, please open an issue on [GitHub](https://github.com/username/obstacle_simulation/issues).
-
-## Acknowledgments
-
-Special thanks to the open-source community and all contributors for their efforts and support.
 
