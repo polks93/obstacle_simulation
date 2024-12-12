@@ -6,10 +6,9 @@
 
 ## Features
 
-- **Ship-Like Obstacles**: Model ship obstacles with realistic geometry.
-- **Inflation Support**: Generate inflated boundaries for collision avoidance.
-- **LiDAR Simulation**: Simulate LiDAR sensors to detect obstacles and segments.
-- **Collision Detection**: Identify collisions between obstacles and cirular entities
+- **Ship-Like Obstacles**:  Generate obstacles in the form of polygons to recreate the shape of a ship's hull in 2D.
+- **LiDAR Simulation**: Simulate LiDAR sensors to detect obstacles and segments. The ship's perimeter is represented by specialized `ShipSegment` objects, which are used for intersection calculations and tracking detected segments.
+- **Collision Detection**:  Identify collisions between an obstacle and an entity defined by a circular footprint.
 - **Customizable Transformations**: Rotate, translate, and reposition obstacles dynamically.
 
 ## Installation
@@ -70,12 +69,29 @@ print(ranges)
 
 #### Classes
 - **`ShipObstacle`**: Represents a ship-like obstacle with customizable geometry and transformations.
+  - **Constructor Arguments**:
+    - `ship_center: Tuple[float, float]`: The center of the ship in (x, y) coordinates.
+    - `Options: Dict = {}`: Additional configuration options for the ship.
+    - `inflation_radius: float = 0.5`: The radius of the robot's circular footprint used to control collisions.
+    - `use_default_values: bool = True`: Whether to use default ship parameters.
+    - `scale: float = 0.9`: Scaling factor for the ship's geometry.
+    - `use_custom_ship: bool = False`: Whether to use a custom-defined ship geometry. Set to `False` for a simple geometry or `True` for a more complex geometry.
   - **Methods**:
-    - `rotate_ship(angle: float)`: Rotates the ship by a specified angle.
-    - `translate_ship(vector: tuple)`: Translates the ship by a specified vector.
+    - `reset_ship()`: Resets the ship to its original state, including position, orientation, and geometry.
+    - `rototranslate(angle: float, vector: tuple)`: Rotates the ship by a specified angle and translates it by a vector.
     - `random_placement(workspace: tuple, safe_distance: float)`: Places the ship randomly within a workspace while maintaining a safe distance.
     - `point_in_ship(point: np.ndarray) -> bool`: Checks if a point is inside the inflated ship geometry.
     - `point_in_custom_ship(point: np.ndarray) -> bool`: Checks if a point is inside the custom ship geometry using the winding number method.
+
+- **`ShipSegment`**: Represents a segment of the ship's perimeter with attributes for start, end, and midpoint coordinates, as well as a unique identifier and visibility status.
+  - **Attributes**:
+    - `id`: A unique identifier for the segment.
+    - `start_point`: The starting coordinate of the segment `(x, y)`.
+    - `end_point`: The ending coordinate of the segment `(x, y)`.
+    - `mid_point`: The midpoint of the segment `(x, y)`, calculated as the average of the start and end points.
+    - `seen`: A boolean indicating whether the segment has been detected by a LiDAR ray, initially set to `False`.
+  - **Methods**:
+    - `__init__(id: int, start_point: tuple, end_point: tuple)`: Initializes the segment with its attributes.
 
 #### Functions
 - **`lidar(pose: np.ndarray, Ship: ShipObstacle, lidar_params: dict) -> Tuple[np.ndarray, np.ndarray, Set[int]]`**: Simulates LiDAR detection for a given pose and obstacle.
