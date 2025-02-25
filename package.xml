@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>obstacle-simulation</name>
+  <version>1.0.0</version>
+  <description>Simulate a ship-like obstacle</description>
+
+  <maintainer email="p.marinelli2@studenti.unipi.it">Paolo Marinelli</maintainer>
+  <license>MIT</license>
+
+  <!-- Catkin è la build tool di base per ROS1 -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Se usi rospy nei tuoi script Python -->
+  <build_depend>rospy</build_depend>
+  <exec_depend>rospy</exec_depend>
+
+  <!-- Se usi message/service in DRL_path_planning e vuoi generare msg/srv, 
+       aggiungi i relativi pacchetti qui. 
+       Esempio: <build_depend>std_msgs</build_depend>, ecc. -->
+
+  <!-- Se vuoi dichiarare, a livello ROS, le dipendenze Python 
+       (numpy, torch, gymnasium, ecc.) puoi usare <exec_depend> 
+       Tuttavia, ricorda che in molti casi catkin non le installerà 
+       da solo; è più che altro un “memo”. -->
+<exec_depend>numpy</exec_depend>
+<exec_depend>matplotlib</exec_depend>
+<exec_depend>scipy</exec_depend>
+
+  <export>
+    <build_type>catkin</build_type>
+  </export>
+</package>
