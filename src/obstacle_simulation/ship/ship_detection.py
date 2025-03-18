@@ -1,6 +1,5 @@
 import numpy as np
 from typing import Union, Tuple, Set, Sequence
-import matplotlib.pyplot as plt
 
 from obstacle_simulation import ShipObstacle
 
@@ -187,6 +186,8 @@ def point_to_segment_distance(P, s):
     return np.linalg.norm(P - projection)
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
     Ship = ShipObstacle((3,0))
     Cx, Cy = Ship.center
     radius = Ship.radius

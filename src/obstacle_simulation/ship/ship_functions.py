@@ -1,6 +1,5 @@
 import numpy as np
 import copy
-import matplotlib.pyplot as plt
 
 from scipy.integrate import quad
 from typing import Dict, Tuple
@@ -705,6 +704,18 @@ def generate_custom_ship_polygon(L, W, a_left, a_right, points_distance, ship_ce
     return points
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    """ Saving ship points coordinates """
+    # ship = ShipObstacle(ship_center=(0,0), use_custom_ship=False, scale=2.5)
+    # points = ship.points
+    # x, y = zip(*points)
+    # with open('ship_points.yaml', 'w') as file:
+    #     file.write('ship_points:\n')
+    #     for i, point in enumerate(points):
+    #         if i % 3 == 0:
+    #             file.write(f'  - [{point[0]}, {point[1]}]\n')
+    # file.close()
+    
     """ Test della funzione generate_ship_polygon """
     # L = 1
     # W = 1.5
@@ -733,32 +744,32 @@ if __name__ == "__main__":
 
     """" Test della classe ShipObstacle """
     # # Worksapce
-    workspace = (0,0,8,8)
-    workspace_center = ((workspace[0] + workspace[2]) / 2, (workspace[1] + workspace[3]) / 2)
+    # workspace = (0,0,8,8)
+    # workspace_center = ((workspace[0] + workspace[2]) / 2, (workspace[1] + workspace[3]) / 2)
     # # workspace_points = [(workspace[0], workspace[1]), (workspace[2], workspace[1]), (workspace[2], workspace[3]), (workspace[0], workspace[3]), (workspace[0], workspace[1])]
     # # x_ws, y_ws = zip(*workspace_points)
     
     # # # Genera la nave
     # Ship = ShipObstacle(ship_center=workspace_center, use_default_values=True, use_custom_ship=True)
-    ship_center = workspace_center
-    ship_scale_factor = 1.5
-    footprint = 0.5
-    Ship = ShipObstacle(ship_center, scale=ship_scale_factor, inflation_radius=footprint, use_custom_ship=True)
-    Cx, Cy = Ship.center
-    radius = Ship.radius
-    points = Ship.points
-    x, y = zip(*points)
+    # ship_center = workspace_center
+    # ship_scale_factor = 1.5
+    # footprint = 0.5
+    # Ship = ShipObstacle(ship_center, scale=ship_scale_factor, inflation_radius=footprint, use_custom_ship=True)
+    # Cx, Cy = Ship.center
+    # radius = Ship.radius
+    # points = Ship.points
+    # x, y = zip(*points)
 
     # # Ship.random_placement(workspace, safe_distance=1.5)
     # # # Ship.reset_ship()
-    point = np.array([0.4,4])
-    print(Ship.point_in_custom_ship(point))
-    if np.linalg.norm([point[0] - Cx, point[1] - Cy]) > radius + footprint:
-        print("Out")
+    # point = np.array([0.4,4])
+    # print(Ship.point_in_custom_ship(point))
+    # if np.linalg.norm([point[0] - Cx, point[1] - Cy]) > radius + footprint:
+    #     print("Out")
     # # edges = Ship.get_edges()
     # # print(len(edges))
-    inflated_points = Ship.inflated_points
-    x_inflate, y_inflate = zip(*inflated_points)
+    # inflated_points = Ship.inflated_points
+    # x_inflate, y_inflate = zip(*inflated_points)
     # # # # print(len(edges))
     # # # # Ship.rototranslate_ship(0, (0,0))
     # # # # Ship.reset_ship()
@@ -770,9 +781,9 @@ if __name__ == "__main__":
     # square_points = [(x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max), (x_min, y_min)]
     # x_square, y_square = zip(*square_points)
 
-    theta = np.linspace(0, 2*np.pi, 100)
-    x_circle = Cx + radius * np.cos(theta)
-    y_circle = Cy + radius * np.sin(theta)
+    # theta = np.linspace(0, 2*np.pi, 100)
+    # x_circle = Cx + radius * np.cos(theta)
+    # y_circle = Cy + radius * np.sin(theta)
 
     # # Ship.rototranslate_ship(np.pi/4, (0,0))
     # # rot_points = Ship.points
@@ -790,23 +801,23 @@ if __name__ == "__main__":
 
 
 
-    plt.figure(figsize=(8, 4))
-    plt.plot(x, y, '-o', label='Rettangolo con Semicerchi e Segmenti Equidistanti')
-    # # plt.plot(x_rot, y_rot, '-o', label='Rettangolo con Semicerchi e Segmenti Equidistanti Ruotato di 45')
-    plt.plot(x_inflate, y_inflate, '-o', label='Rettangolo Inflato')
-    plt.scatter(Cx, Cy, color='r', label='Centro della Nave', s=100)
-    # plt.plot(x_square, y_square, '-o', label='Quadrato di Bounding Box')
-    plt.scatter(point[0], point[1], color='g', label='Punto da Testare', s=100)
+    # plt.figure(figsize=(8, 4))
+    # plt.plot(x, y, '-o', label='Rettangolo con Semicerchi e Segmenti Equidistanti')
+    # # # plt.plot(x_rot, y_rot, '-o', label='Rettangolo con Semicerchi e Segmenti Equidistanti Ruotato di 45')
+    # plt.plot(x_inflate, y_inflate, '-o', label='Rettangolo Inflato')
+    # plt.scatter(Cx, Cy, color='r', label='Centro della Nave', s=100)
+    # # plt.plot(x_square, y_square, '-o', label='Quadrato di Bounding Box')
+    # plt.scatter(point[0], point[1], color='g', label='Punto da Testare', s=100)
 
-    # plt.plot(x_c, y_c, '+r', label='Punti Medi dei Segmenti')
-    plt.plot(x_circle, y_circle, '--', label='Circonferenza di Bounding Box')
-    plt.axis('equal')
-    # # # plt.title('Approssimazione della Chiglia con Segmenti Equidistanti sui Lati Orizzontali')
-    # # # plt.xlabel('X')
-    # # # plt.ylabel('Y')
-    # # # plt.xlim(-2,8)
-    plt.grid(True)
-    plt.show()
+    # # plt.plot(x_c, y_c, '+r', label='Punti Medi dei Segmenti')
+    # plt.plot(x_circle, y_circle, '--', label='Circonferenza di Bounding Box')
+    # plt.axis('equal')
+    # # # # plt.title('Approssimazione della Chiglia con Segmenti Equidistanti sui Lati Orizzontali')
+    # # # # plt.xlabel('X')
+    # # # # plt.ylabel('Y')
+    # # # # plt.xlim(-2,8)
+    # plt.grid(True)
+    # plt.show()
     # # for i in range(5):
     #     # vec = (np.random.uniform(-1.5, 1.5), np.random.uniform(-1.5, 1.5))
     #     # theta = np.random.uniform(0, 2*np.pi)
